@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+<title>图片上传</title>
+<link href="__PUBLIC__/bootstrap/css/bootstrap.css" rel="stylesheet">
+<link href="__PUBLIC__/plugins/plupload/upload.css" rel="stylesheet">
+<script type="text/javascript" src="__PUBLIC__/plugins/plupload/jquery.js"></script>
+<script type="text/javascript" src="__PUBLIC__/plugins/plupload/plupload.full.min.js"></script>
+</head>
+<style type="text/css">
+  #myform table{min-width:600px;width:60%;}
+  .formInput{display:inline-block;}
+  #btn button{margin-left: 180px}
+  #mybtn {padding: 20px}
+  #mybtn #btn2{margin-left: 20px}
+</style>
+</head>
+<body>
+<div id="mybtn"><button class="btn btn-default" onclick="javascript:location.href='__ROOT__/index.php/Home/Index/index'">单图片上传</button><button class="btn btn-info"  id="btn2">多图片上传</button></div>
+<div class='wst-tbar' style="height:50px;padding-left: 10px">
+<form  id="myform" method="post" action="#" enctype="multipart/form-data">
+    <table class="table table-striped  table-hover">
+      <tbody>
+      <tr>
+        <td colspan="2">
+          <div id="uploadPics"> <a class="uploadBtn" id="uploadBtn">上传图片</a> <ul id="ul_pics" class="ul_pics clearfix"></ul></div>
+        </td>
+      </tr>
+      <tr><td style="width:180px">上传图片的路径：</td><td><input type='text' id='pics' class="form-control formInput" value="" /></td></tr>
+       <tr id="btn"><td colspan="2"><button class="btn btn-danger" type="submit">保&nbsp;存</button><button type="button" class="btn btn-primary">返&nbsp;回</button></td></tr>
+      </tbody>
+    </table>
+</form>
+</div>
+<script type="text/javascript">
+    //创建实例的构造方法
+  var uploader = new plupload.Uploader({
+    //上传插件初始化选用那种方式的优先级顺序
+    runtimes: 'html5,flash,silverlight,html4', 
+     // 上传按钮
+    browse_button: 'uploadBtn',
+     //远程上传地址
+    url: "__ROOT__/index.php/Home/Index/multiUploadPic",
+    flash_swf_url: 'plupload/Moxie.swf', 
+    //silverlight文件地址
+    silverlight_xap_url: 'plupload/Moxie.xap', 
+    //最大上传文件大小（格式100b, 10kb, 10mb, 1gb）
+    filters: {
+        max_file_size: '500kb', 
+        mime_types: [
+            {title: "files", extensions: "jpg,png,gif"}
+        ]
+    },
+    multi_selection: true, //true:ctrl多文件上传, false 单文件上传
+    init: {
+        FilesAdded: function(up, files) { //文件上传前
+            if ($("#ul_pics").children("li").length > 30) {
+                alert("您上传的图片太多了！");
+                uploader.destroy();
+            } else {
+                var li = '';
+                plupload.each(files, function(file) { //遍历文件
+                    li += "<li id='" + file['id'] + "'><div class='progress'><span class='bar'></span><span class='percent'>0%</span></div></li>";
+                });
+                $("#ul_pics").append(li);
+                uploader.start();
+            }
+        },
+        UploadProgress: function(up, file) { //上传中，显示进度条
+        var percent = file.percent;
+            $("#" + file.id).find('.bar').css({"width": percent + "%"});
+            $("#" + file.id).find(".percent").text(percent + "%");
+        },
+        FileUploaded: function(up, file, info) { //文件上传成功的时候触发
+            var data = JSON.parse(info.response);
+            var html = "<div class='img'><img src='__ROOT__/" + data.pic + "'/></div><p>" + data.name + "</p>";
+            html +="<div class='uplCancel' url='"+data.pic+"'  style='display: block;width: 32px;height: 32px;cursor: pointer;position: absolute;top:5px;left:130px;z-Index=99'></div>"
+            $("#" + file.id).html(html);
+            //填上上传图片的路径
+            var pics=$('#pics').val();
+            if(!pics) $('#pics').val(data.pic);
+            else $('#pics').val(pics+";"+data.pic);
+            $(".uplCancel").click(remove);
+        },
+        Error: function(up, err) { //上传出错的时候触发
+            alert(err.message);
+        }
+    }
+});
+
+uploader.init();
+</script>
+ </body>
+</html>
+
+
